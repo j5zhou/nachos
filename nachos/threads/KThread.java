@@ -2,6 +2,8 @@ package nachos.threads;
 
 import nachos.machine.*;
 
+import java.util.HashMap;
+
 /**
  * A KThread is a thread that can be used to execute Nachos kernel code. Nachos
  * allows multiple threads to run concurrently.
@@ -203,10 +205,10 @@ public class KThread {
 
 		currentThread.status = statusFinished;
 
-		if(currentThread.joinThread!=null){
-			System.out.println("finish " + currentThread.joinThread.getName());
-			currentThread.joinThread.ready();
-			currentThread.joinThread = null;
+		// deal with join operation
+		if(currentThread.childThread!=null){
+			currentThread.childThread.ready();
+			System.out.println("The child Thread is ready again");
 		}
 
 		sleep();
@@ -228,7 +230,7 @@ public class KThread {
 	 * restores interrupts to the previous state, in case <tt>yield()</tt> was
 	 * called with interrupts disabled.
 	 */
-	public static void yield() {
+	public static void  yield() {
 		Lib.debug(dbgThread, "Yielding thread: " + currentThread.toString());
 
 		Lib.assertTrue(currentThread.status == statusRunning);
@@ -287,27 +289,20 @@ public class KThread {
 	 * is not guaranteed to return. This thread must not be the current thread.
 	 */
 	public void join() {
-
 		Lib.debug(dbgThread, "Joining to thread: " + toString());
 
-		Lib.assertTrue(this != currentThread);
+		Lib.assertTrue(this != currentThread,"Thread cannot call join on itself");
 
-		System.out.println("inside join");
-		System.out.println("1"+currentThread.getName());
-		System.out.println("2"+this.getName());
-		if (this.joinThread != null){
-			System.out.println("3"+this.joinThread.getName());
+		// make sure only join for once
+		Lib.assertTrue(joinCount == 1,"Thread can only be called on join once" );
+
+		if(this.status==4){
+			return;
 		}
-
-		if(this.joinThread != null) return;
-
 		boolean intStatus = Machine.interrupt().disable();
-		//proj 1
-		if (this.status == statusFinished) return;
-
-		this.joinThread = currentThread;
-
-		sleep();
+		currentThread.sleep();
+		joinCount = 0;
+		childThread = currentThread;
 		Machine.interrupt().restore(intStatus);
 	}
 
@@ -363,9 +358,11 @@ public class KThread {
 	 * The state of the previously running thread must already have been changed
 	 * from running to blocked or ready (depending on whether the thread is
 	 * sleeping or yielding).
-	 *
+	 * 
+	 * finishing <tt>true</tt> if the current thread is finished, and
+	 * should be destroyed by the new thread.
 	 */
-	private void run() {
+	private void  run() {
 		Lib.assertTrue(Machine.interrupt().disabled());
 
 		Machine.yield();
@@ -434,12 +431,101 @@ public class KThread {
 	 */
 	public static void selfTest() {
 		Lib.debug(dbgThread, "Enter KThread.selfTest");
-		Alarm.selfTest();
-//		new KThread(new PingTest(1)).setName("forked thread").fork();
-//		new PingTest(0).run();
-//		joinTest1();
-
+//		new InterlockTest();
+//		alarmTest1();
 	}
+
+	/**
+	 * gien test example
+	 */
+	private static void joinTest1 () {
+		KThread child1 = new KThread( new Runnable () {
+			public void run() {
+				System.out.println("I (heart) Nachos!");
+			}
+		});
+		child1.setName("child1").fork();
+
+		// We want the child to finish before we call join.  Although
+		// our solutions to the problems cannot busy wait, our test
+		// programs can!
+
+		for (int i = 0; i < 5; i++) {
+			System.out.println ("busy...");
+			KThread.currentThread().yield();
+		}
+
+		child1.join();
+		System.out.println("After joining, child1 should be finished.");
+		System.out.println("is it? " + (child1.status == statusFinished));
+		Lib.assertTrue((child1.status == statusFinished), " Expected child1 to be finished.");
+	}
+
+	/**
+	 * no work
+	 */
+	private static void joinTest2 () {
+		KThread child1 = new KThread( new Runnable () {
+			public void run() {
+				System.out.println("I (heart) Nachos!");
+			}
+		});
+//		KThread child2 = new KThread( new Runnable () {
+//			public void run() {
+//				System.out.println("I (heart) Nachos!");
+//			}
+//		});
+		child1.setName("child1").fork();
+//		child2.setName("child2").fork();
+
+		child1.join();
+		for (int i = 0; i < 5; i++) {
+			System.out.println("i = " + i);
+			child1.currentThread().yield();
+			System.out.println("child1 status = " + child1.status);
+			System.out.println("currentThread status = " + currentThread.status);
+		}
+
+//		System.out.println("After joining, child1 should be finished.");
+//		System.out.println("is it? " + (child1.status == statusFinished));
+		Lib.assertTrue((child1.status == statusFinished), " Expected child1 to be finished.");
+	}
+
+
+	private static void joinTest3 () {
+		KThread child1 = new KThread( new Runnable () {
+			public void run() {
+
+				System.out.println("I (heart) Nachos!");
+				KThread child2 = new KThread( new Runnable () {
+					public void run() {
+						System.out.println("I (heart) Nachos2!");
+					}
+				});
+				child2.setName("child2").fork();
+				child2.yield();
+				child2.join();
+				child2.join();
+			}
+		});
+		child1.setName("child1").fork();
+	}
+
+
+	public static void alarmTest1() {
+		int durations[] = {1000, 10*1000, 100*1000};
+		long t0, t1;
+
+		for (int d : durations) {
+			t0 = Machine.timer().getTime();
+			ThreadedKernel.alarm.waitUntil (d);
+			t1 = Machine.timer().getTime();
+			System.out.println ("alarmTest1: waited for " + (t1 - t0) + " ticks");
+		}
+	}
+
+
+
 
 	private static final char dbgThread = 't';
 
@@ -490,47 +576,10 @@ public class KThread {
 
 	private static KThread idleThread = null;
 
-	private KThread joinThread = null;
+	// count the number of join
+	private int joinCount = 1;
 
-	// Place Join test code in the KThread class and invoke test methods
-	// from KThread.selfTest().
-
-	// Simple test for the situation where the child finishes before
-	// the parent calls join on it.
-
-	private static void joinTest1 () {
-		KThread child1 = new KThread( new Runnable () {
-			public void run() {
-
-
-				KThread child2 = new KThread( new Runnable () {
-					public void run() {
-						System.out.println("I (heart) Nachos! for 2");
-					}
-				});
-
-				child2.setName("child2").fork();
-				child2.join();
-				System.out.println("I (heart) Nachos!");
-			}
-		});
-		child1.setName("child1").fork();
-
-		// We want the child to finish before we call join.  Although
-		// our solutions to the problems cannot busy wait, our test
-		// programs can!
-
-//		for (int i = 0; i < 5; i++) {
-//			System.out.println ("busy...");
-//			KThread.currentThread().yield();
-//		}
-
-		System.out.println(currentThread.getName());
-		child1.join();
-//		KThread.currentThread().yield();
-
-		System.out.println("After joining, child1 should be finished.");
-		System.out.println("is it? " + (child1.status == statusFinished));
-		Lib.assertTrue((child1.status == statusFinished), " Expected child1 to be finished.");
-	}
+	// store father and child for join operation
+//	private Map<KThread,KThread> joinMap = new HashMap<>();
+	private  KThread childThread = null;
 }
