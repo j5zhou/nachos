@@ -57,6 +57,10 @@ public class Condition2 {
 		while(!waitQueue.isEmpty()&&waitQueue.peek().getStatus()!=3){
 			waitQueue.removeFirst();
 		}
+		if(waitQueue.isEmpty()){
+			Machine.interrupt().restore(intStatus);
+			return;
+		}
 		KThread kt = waitQueue.removeFirst();
 		kt.ready();
 		ThreadedKernel.alarm.cancel(kt);
@@ -101,7 +105,7 @@ public class Condition2 {
 
         private Lock conditionLock;
 
-		private LinkedList<KThread> waitQueue;
+		private LinkedList<KThread> waitQueue = new LinkedList<>();
 
 	/**
 	 * test below
@@ -147,5 +151,9 @@ public class Condition2 {
 			ping.join();
 			// for (int i = 0; i < 50; i++) { KThread.currentThread().yield(); }
 		}
+	}
+
+	public static void selfTest() {
+		new InterlockTest();
 	}
 }
