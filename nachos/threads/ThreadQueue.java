@@ -80,7 +80,7 @@ public abstract class ThreadQueue {
 	 * through <tt>request()</tt> and <tt>nextThread()</tt>. For example, if a
 	 * thread acquires a lock that no other threads are waiting for, it should
 	 * call this method.
-	 * 
+	 *
 	 * <p>
 	 * This method should not be called for a thread returned from
 	 * <tt>nextThread()</tt>.

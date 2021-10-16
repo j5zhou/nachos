@@ -52,9 +52,14 @@ public class Condition2 {
 	public void wake() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 		boolean intStatus = Machine.interrupt().disable();
-		if(!waitQueue.isEmpty()){
-			waitQueue.removeFirst().ready();
+
+		// find a thread which is not block and wake it
+		while(!waitQueue.isEmpty()&&waitQueue.peek().getStatus()!=3){
+			waitQueue.removeFirst();
 		}
+		KThread kt = waitQueue.removeFirst();
+		kt.ready();
+		ThreadedKernel.alarm.cancel(kt);
 
 		Machine.interrupt().restore(intStatus);
 	}
@@ -85,9 +90,11 @@ public class Condition2 {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 		boolean intStatus = Machine.interrupt().disable();
 
-		sleep();
+		waitQueue.add(KThread.currentThread());
+		ThreadedKernel.alarm.waitUntil(timeout);
 
 
+//		waitQueue.remove(KThread.currentThread());
 
 		Machine.interrupt().restore(intStatus);
 

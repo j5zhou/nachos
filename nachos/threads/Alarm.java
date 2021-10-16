@@ -3,6 +3,7 @@ package nachos.threads;
 import nachos.machine.*;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
@@ -12,7 +13,7 @@ import java.util.Queue;
  */
 public class Alarm {
 
-	Queue<Wait> threadQ;
+	private Queue<Wait> threadQ;
 
 	private static class Wait{
 		private KThread kthread;
@@ -117,6 +118,12 @@ public class Alarm {
 	 * @param thread the thread whose timer should be cancelled.
 	 */
 	public boolean cancel(KThread thread) {
+//		Iterator iter = this.threadQ.iterator();
+//		while(iter.hasNext()){
+//			if(iter.next().)
+//		}
+		Wait[] threadqueue = (Wait[]) threadQ.toArray();
+
 		return false;
 	}
 

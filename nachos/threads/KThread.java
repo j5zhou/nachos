@@ -431,7 +431,7 @@ public class KThread {
 	 */
 	public static void selfTest() {
 		Lib.debug(dbgThread, "Enter KThread.selfTest");
-//		new InterlockTest();
+
 //		alarmTest1();
 	}
 
@@ -545,6 +545,10 @@ public class KThread {
 	private static final int statusBlocked = 3;
 
 	private static final int statusFinished = 4;
+
+	public int getStatus() {
+		return status;
+	}
 
 	/**
 	 * The status of this thread. A thread can either be new (not yet forked),
