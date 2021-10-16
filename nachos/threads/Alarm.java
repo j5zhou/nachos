@@ -122,13 +122,18 @@ public class Alarm {
 //		while(iter.hasNext()){
 //			if(iter.next().)
 //		}
-//		Wait[] threadqueue = (Wait[]) threadQ.toArray();
+//		Wait[] threadqueue = (Wait[]) threadQ.toArray()
+//		boolean intStatus = Machine.interrupt().disable();
 		for (Wait w:threadQ){
-			if (w.getKThread() == thread){
+			boolean intStatus = Machine.interrupt().disable();
+			if (w.getKThread()!=null && w.getKThread() == thread){
 				threadQ.remove(w);
+				Machine.interrupt().restore(intStatus);
 				return true;
 			}
+			Machine.interrupt().restore(intStatus);
 		}
+//		Machine.interrupt().restore(intStatus);
 		return false;
 	}
 
