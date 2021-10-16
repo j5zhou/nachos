@@ -31,12 +31,12 @@ public class GameMatch {
 
         private Lock lock;
         private int count;
-        private Condition list;
+        private Condition CV;
 
-        public Gamelevel(Lock lock,int count,Condition list) {
+        public Gamelevel(Lock lock,int count,Condition cv) {
             this.lock = lock;
             this.count = count;
-            this.list = list;
+            this.CV = cv;
         }
 
         public Lock getLock() {
@@ -47,8 +47,8 @@ public class GameMatch {
             return count;
         }
 
-        public Condition getList() {
-            return list;
+        public Condition getCV() {
+            return CV;
         }
 
         public void setLock(Lock lock) {
@@ -59,8 +59,8 @@ public class GameMatch {
             this.count = count;
         }
 
-        public void setList(Condition list) {
-            this.list = list;
+        public void setCV(Condition cv) {
+            this.CV = cv;
         }
     }
 
@@ -120,7 +120,7 @@ public class GameMatch {
 //        System.out.println (inMatch);
         if(inMatch == 1){
             level.getLock().acquire();
-            level.getList().wakeAll();
+            level.getCV().wakeAll();
             level.getLock().release();
             level.setCount(numInMatch);
             matchNumber++;
@@ -128,7 +128,7 @@ public class GameMatch {
         else{
             level.setCount(level.getCount()-1);
             level.getLock().acquire();
-            level.getList().sleep();
+            level.getCV().sleep();
             level.getLock().release();
         }
         return;

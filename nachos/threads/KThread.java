@@ -432,9 +432,9 @@ public class KThread {
 	 */
 	public static void selfTest() {
 		Lib.debug(dbgThread, "Enter KThread.selfTest");
-//		GameMatch.matchTest4();
+		GameMatch.matchTest4();
 //		Alarm.alarmTest1();
-		Condition2.selfTest();
+//		Condition2.selfTest();
 //		cvTest5();
 	}
 
