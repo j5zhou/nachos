@@ -97,9 +97,6 @@ public class Condition2 {
 //		waitQueue.remove(KThread.currentThread());
 
 		Machine.interrupt().restore(intStatus);
-
-
-
 	 }
 
         private Lock conditionLock;
