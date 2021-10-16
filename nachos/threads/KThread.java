@@ -206,8 +206,8 @@ public class KThread {
 		currentThread.status = statusFinished;
 
 		// deal with join operation
-		if(childThread!=null){
-			childThread.ready();
+		if(currentThread.childThread!=null){
+			currentThread.childThread.ready();
 			System.out.println("The child Thread is ready again");
 		}
 
@@ -431,7 +431,7 @@ public class KThread {
 	 */
 	public static void selfTest() {
 		Lib.debug(dbgThread, "Enter KThread.selfTest");
-		joinTest1();
+		joinTest3();
 	}
 
 	/**
@@ -494,13 +494,23 @@ public class KThread {
 	private static void joinTest3 () {
 		KThread child1 = new KThread( new Runnable () {
 			public void run() {
+
 				System.out.println("I (heart) Nachos!");
+				KThread child2 = new KThread( new Runnable () {
+					public void run() {
+						System.out.println("I (heart) Nachos2!");
+					}
+				});
+				child2.setName("child2").fork();
+				child2.join();
+				child2.join();
 			}
 		});
 		child1.setName("child1").fork();
-		child1.join();
-		child1.join();
 	}
+
+
+
 
 
 	private static final char dbgThread = 't';
@@ -553,9 +563,9 @@ public class KThread {
 	private static KThread idleThread = null;
 
 	// count the number of join
-	private static int joinCount = 1;
+	private int joinCount = 1;
 
 	// store father and child for join operation
 //	private Map<KThread,KThread> joinMap = new HashMap<>();
-	private  static KThread childThread = null;
+	private  KThread childThread = null;
 }
