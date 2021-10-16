@@ -431,7 +431,8 @@ public class KThread {
 	 */
 	public static void selfTest() {
 		Lib.debug(dbgThread, "Enter KThread.selfTest");
-		joinTest3();
+//		new InterlockTest();
+//		alarmTest1();
 	}
 
 	/**
@@ -502,6 +503,7 @@ public class KThread {
 					}
 				});
 				child2.setName("child2").fork();
+				child2.yield();
 				child2.join();
 				child2.join();
 			}
@@ -509,6 +511,18 @@ public class KThread {
 		child1.setName("child1").fork();
 	}
 
+
+	public static void alarmTest1() {
+		int durations[] = {1000, 10*1000, 100*1000};
+		long t0, t1;
+
+		for (int d : durations) {
+			t0 = Machine.timer().getTime();
+			ThreadedKernel.alarm.waitUntil (d);
+			t1 = Machine.timer().getTime();
+			System.out.println ("alarmTest1: waited for " + (t1 - t0) + " ticks");
+		}
+	}
 
 
 
