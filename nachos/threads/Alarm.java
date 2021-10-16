@@ -122,7 +122,7 @@ public class Alarm {
 //		while(iter.hasNext()){
 //			if(iter.next().)
 //		}
-		Wait[] threadqueue = (Wait[]) threadQ.toArray();
+//		Wait[] threadqueue = (Wait[]) threadQ.toArray();
 		for (Wait w:threadQ){
 			if (w.getKThread() == thread){
 				threadQ.remove(w);
