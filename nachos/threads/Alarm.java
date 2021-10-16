@@ -3,6 +3,7 @@ package nachos.threads;
 import nachos.machine.*;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
@@ -12,7 +13,7 @@ import java.util.Queue;
  */
 public class Alarm {
 
-	Queue<Wait> threadQ;
+	private Queue<Wait> threadQ;
 
 	private static class Wait{
 		private KThread kthread;
@@ -42,7 +43,7 @@ public class Alarm {
 	/**
 	 * Allocate a new Alarm. Set the machine's timer interrupt handler to this
 	 * alarm's callback.
-	 * 
+	 *
 	 * <p>
 	 * <b>Note</b>: Nachos will not function correctly with more than one alarm.
 	 */
@@ -79,12 +80,12 @@ public class Alarm {
 	 * Put the current thread to sleep for at least <i>x</i> ticks, waking it up
 	 * in the timer interrupt handler. The thread must be woken up (placed in
 	 * the scheduler ready set) during the first timer interrupt where
-	 * 
+	 *
 	 * <p>
 	 * <blockquote> (current time) >= (WaitUntil called time)+(x) </blockquote>
-	 * 
+	 *
 	 * @param x the minimum number of clock ticks to wait.
-	 * 
+	 *
 	 * @see nachos.machine.Timer#getTime()
 	 */
 	public void waitUntil(long x) {
@@ -112,11 +113,17 @@ public class Alarm {
 	 * up the thread immediately (placing it in the scheduler
 	 * ready set) and returning true.  If <i>thread</i> has no
 	 * timer set, return false.
-	 * 
+	 *
 	 * <p>
 	 * @param thread the thread whose timer should be cancelled.
 	 */
-        public boolean cancel(KThread thread) {
+	public boolean cancel(KThread thread) {
+//		Iterator iter = this.threadQ.iterator();
+//		while(iter.hasNext()){
+//			if(iter.next().)
+//		}
+		Wait[] threadqueue = (Wait[]) threadQ.toArray();
+
 		return false;
 	}
 
