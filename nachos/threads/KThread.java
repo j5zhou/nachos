@@ -434,10 +434,10 @@ public class KThread {
 	 */
 	public static void selfTest() {
 		Lib.debug(dbgThread, "Enter KThread.selfTest");
-
+		Alarm.selfTest();
 //		new KThread(new PingTest(1)).setName("forked thread").fork();
 //		new PingTest(0).run();
-		joinTest1();
+//		joinTest1();
 
 	}
 
