@@ -2,8 +2,6 @@ package nachos.threads;
 
 import nachos.machine.*;
 
-import java.util.LinkedList;
-
 /**
  * A <i>GameMatch</i> groups together player threads of the same
  * ability into fixed-sized groups to play matches with each other.
@@ -27,7 +25,7 @@ public class GameMatch {
 
     private int numInMatch;
 
-    private int matchnums;
+    private int matchNumber;
 
     private class Gamelevel {
 
@@ -80,7 +78,7 @@ public class GameMatch {
         Intermediate =new Gamelevel(lockI,numInMatch,new Condition(lockI));
         Expert =new Gamelevel(lockE,numInMatch,new Condition(lockE));
 
-        matchnums = 0;
+        matchNumber = 0;
     }
 
     /**
@@ -104,13 +102,13 @@ public class GameMatch {
 	    switch (ability){
             case abilityBeginner:
                 playLevel(Beginer);
-                return matchnums;
+                return matchNumber;
             case abilityIntermediate:
                 playLevel(Intermediate);
-                return matchnums;
+                return matchNumber;
             case abilityExpert:
                 playLevel(Expert);
-                return matchnums;
+                return matchNumber;
             default:
                 return -1;
         }
@@ -125,7 +123,7 @@ public class GameMatch {
             level.getList().wakeAll();
             level.getLock().release();
             level.setCount(numInMatch);
-            matchnums++;
+            matchNumber++;
         }
         else{
             level.setCount(level.getCount()-1);
