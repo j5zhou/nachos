@@ -2,7 +2,6 @@ package nachos.threads;
 
 import nachos.machine.*;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 
 /**
@@ -207,8 +206,8 @@ public class KThread {
 		currentThread.status = statusFinished;
 
 		// deal with join operation
-		if(currentThread.childThread!=null){
-			currentThread.childThread.ready();
+		if(currentThread.ParentThread !=null){
+			currentThread.ParentThread.ready();
 			System.out.println("The child Thread is ready again");
 		}
 
@@ -301,9 +300,9 @@ public class KThread {
 			return;
 		}
 		boolean intStatus = Machine.interrupt().disable();
-		currentThread.sleep();
+		ParentThread = currentThread;
 		joinCount = 0;
-		childThread = currentThread;
+		currentThread.sleep();
 		Machine.interrupt().restore(intStatus);
 	}
 
@@ -432,7 +431,8 @@ public class KThread {
 	 */
 	public static void selfTest() {
 		Lib.debug(dbgThread, "Enter KThread.selfTest");
-		GameMatch.matchTest4();
+		joinTest4();
+//		GameMatch.matchTest4();
 //		Alarm.alarmTest1();
 //		Condition2.selfTest();
 //		cvTest5();
@@ -567,6 +567,87 @@ public class KThread {
 		//for (int i = 0; i < 50; i++) { KThread.currentThread().yield(); }
 	}
 
+	private static void joinTest4() {
+		KThread child4 = new KThread( new Runnable () {
+			public void run() {
+				System.out.println("the current running thread is :"+currentThread.toString());
+				System.out.println("Thread 4 here");
+
+				KThread child4_1 = new KThread( new Runnable () {
+					public void run() {
+						System.out.println("the current running thread is :"+currentThread.toString());
+						System.out.println("Thread 4_1 here");
+						for (int i = 0; i <10; i++) {
+							System.out.println ("working on thread 4_1");
+						}
+
+
+					}
+				});
+				child4_1.setName("child4_1").fork();
+				child4_1.join();
+
+				for (int i = 0; i <10; i++) {
+					System.out.println ("working on thread 4");
+				}
+
+
+			}
+		});
+		child4.setName("child4").fork();
+
+
+		KThread child5 = new KThread( new Runnable () {
+			public void run() {
+				System.out.println("the current running thread is :"+currentThread.toString());
+				System.out.println("Thread 5 here");
+				for (int i = 0; i <20; i++) {
+					System.out.println ("working on thread 5");
+				}
+
+
+				KThread child5_1 = new KThread( new Runnable () {
+					public void run() {
+						System.out.println("the current running thread is :"+currentThread.toString());
+						System.out.println("Thread 5_1 here");
+						for (int i = 0; i <10; i++) {
+							System.out.println ("working on thread 5_1");
+						}
+
+
+
+					}
+				});
+				child5_1.setName("child3_1").fork();
+
+				child5_1.join();
+
+			}
+		});
+		child5.setName("child5").fork();
+
+
+		System.out.println("before joining, the current thread is :"+currentThread.toString());
+		System.out.println(currentThread.toString()+ "'s status: " + currentThread.status);
+
+		//Lib.assertTrue((currentThread.toString() == "main (#0)"));
+		child4.join();
+		//Lib.assertTrue((currentThread.toString() == "main (#0)"));
+		child5.join();
+
+
+		System.out.println("after joining, the current thread is :"+currentThread.toString());
+
+		System.out.println("After joining, child1 should not be finished. And switch to child first");
+		System.out.println("is it? " + (child4.status == statusFinished));
+
+		System.out.println("After done the child thread, switch back to the parent thread: \n current thread is : " + currentThread.toString());
+		//Lib.assertTrue((child2.status == statusFinished), " Expected child1 to be Running.");
+
+
+	}
+
+
 
 
 	private static final char dbgThread = 't';
@@ -627,5 +708,5 @@ public class KThread {
 
 	// store father and child for join operation
 //	private Map<KThread,KThread> joinMap = new HashMap<>();
-	private  KThread childThread = null;
+	private  KThread ParentThread = null;
 }
