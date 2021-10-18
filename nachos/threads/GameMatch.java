@@ -38,7 +38,9 @@ public class GameMatch {
 
         public Gamelevel(Lock lock,int count,Condition cv) {
             this.lock = lock;
+            // the number of players in
             this.count = count;
+            // the number of players out
             this.output = count;
             this.CV = cv;
             this.lastThread = null;
@@ -152,6 +154,9 @@ public class GameMatch {
             level.getLock().acquire();
             level.getCV().wakeAll();
             level.getLock().release();
+            if(lastThread != null){
+                lastThread.join();
+            }
         }
         else{
             level.setCount(level.getCount()-1);
@@ -160,16 +165,16 @@ public class GameMatch {
             level.getLock().release();
         }
         level.setLastThread(KThread.currentThread());
-        if(lastThread != null){
-            lastThread.join();
-        }
+
 
         if(level.getOutput() == numInMatch){
             matchNumber++;
             level.setMatchNumber(matchNumber);
         }
         level.setOutput(level.getOutput()-1);
-        if(level.getOutput() == 0) level.setOutput(numInMatch);
+        if(level.getOutput() == 0) {
+            level.setOutput(numInMatch);
+        }
 //        System.out.println ("end"+KThread.currentThread().getName());
 
     }
