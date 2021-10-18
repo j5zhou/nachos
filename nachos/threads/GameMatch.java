@@ -33,7 +33,7 @@ public class GameMatch {
         private int count;
         private int output;
         private Condition CV;
-        private int matchNumber;
+        private int levelMatchNumber;
 //        private KThread lastThread;
 
         public Gamelevel(Lock lock,int count,Condition cv) {
@@ -70,13 +70,13 @@ public class GameMatch {
             this.CV = cv;
         }
 
-        public int getMatchNumber() {
-            return matchNumber;
-        }
-
-        public void setMatchNumber(int matchNumber) {
-            this.matchNumber = matchNumber;
-        }
+//        public int getMatchNumber() {
+//            return matchNumber;
+//        }
+//
+//        public void setMatchNumber(int matchNumber) {
+//            this.matchNumber = matchNumber;
+//        }
 
 //        public KThread getLastThread() {
 //            return lastThread;
@@ -92,6 +92,14 @@ public class GameMatch {
 
         public void setOutput(int output) {
             this.output = output;
+        }
+
+        public int getLevelMatchNumber() {
+            return levelMatchNumber;
+        }
+
+        public void setLevelMatchNumber(int levelMatchNumber) {
+            this.levelMatchNumber = levelMatchNumber;
         }
     }
 
@@ -133,13 +141,13 @@ public class GameMatch {
 	    switch (ability){
             case abilityBeginner:
                 playLevel(Beginer);
-                return Beginer.getMatchNumber();
+                return Beginer.getLevelMatchNumber();
             case abilityIntermediate:
                 playLevel(Intermediate);
-                return Intermediate.getMatchNumber();
+                return Intermediate.getLevelMatchNumber();
             case abilityExpert:
                 playLevel(Expert);
-                return Expert.getMatchNumber();
+                return Expert.getLevelMatchNumber();
             default:
                 return -1;
         }
@@ -169,7 +177,7 @@ public class GameMatch {
 
         if(level.getOutput() == numInMatch){
             matchNumber++;
-            level.setMatchNumber(matchNumber);
+            level.setLevelMatchNumber(matchNumber);
         }
         level.setOutput(level.getOutput()-1);
         if(level.getOutput() == 0) {
