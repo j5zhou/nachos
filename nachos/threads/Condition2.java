@@ -24,6 +24,7 @@ public class Condition2 {
 	public Condition2(Lock conditionLock) {
 
 		this.conditionLock = conditionLock;
+		this.waitQueue = new LinkedList<KThread>();
 	}
 
 	/**
@@ -63,6 +64,7 @@ public class Condition2 {
 		}
 		KThread kt = waitQueue.removeFirst();
 		kt.ready();
+
 		ThreadedKernel.alarm.cancel(kt);
 
 		Machine.interrupt().restore(intStatus);
@@ -95,7 +97,10 @@ public class Condition2 {
 		boolean intStatus = Machine.interrupt().disable();
 
 		waitQueue.add(KThread.currentThread());
-		ThreadedKernel.alarm.waitUntil(timeout);
+
+		 conditionLock.release();
+		 ThreadedKernel.alarm.waitUntil(timeout);
+		 conditionLock.acquire();
 
 
 //		waitQueue.remove(KThread.currentThread());

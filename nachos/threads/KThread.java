@@ -295,13 +295,14 @@ public class KThread {
 
 		// make sure only join for once
 		Lib.assertTrue(joinCount == 1,"Thread can only be called on join once" );
-
+		// joinCount should be 0 even if it is finished.
+		joinCount = 0;
 		if(this.status==4){
 			return;
 		}
 		boolean intStatus = Machine.interrupt().disable();
 		ParentThread = currentThread;
-		joinCount = 0;
+//		joinCount = 0;
 		currentThread.sleep();
 		Machine.interrupt().restore(intStatus);
 	}
