@@ -161,6 +161,16 @@ public class GameMatch {
         });
         beg2.setName("B2");
 
+        KThread beg3= new KThread( new Runnable () {
+            public void run() {
+                int r = match.play(GameMatch.abilityBeginner);
+                System.out.println ("beg2 matched");
+                // beginners should match with a match number of 1
+                Lib.assertTrue(r == 1, "expected match number of 1");
+            }
+        });
+        beg3.setName("B3");
+
         KThread int1 = new KThread( new Runnable () {
             public void run() {
                 int r = match.play(GameMatch.abilityIntermediate);
@@ -185,6 +195,7 @@ public class GameMatch {
         int1.fork();
         exp1.fork();
         beg2.fork();
+        beg3.fork();
 
         // Assume join is not implemented, use yield to allow other
         // threads to run

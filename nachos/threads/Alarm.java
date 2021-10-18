@@ -122,8 +122,7 @@ public class Alarm {
 //		while(iter.hasNext()){
 //			if(iter.next().)
 //		}
-//		Wait[] threadqueue = (Wait[]) threadQ.toArray()
-//		boolean intStatus = Machine.interrupt().disable();
+//		Wait[] threadqueue = (Wait[]) threadQ.toArray();
 		for (Wait w:threadQ){
 			boolean intStatus = Machine.interrupt().disable();
 			if (w.getKThread()!=null && w.getKThread() == thread){
@@ -133,7 +132,6 @@ public class Alarm {
 			}
 			Machine.interrupt().restore(intStatus);
 		}
-//		Machine.interrupt().restore(intStatus);
 		return false;
 	}
 
