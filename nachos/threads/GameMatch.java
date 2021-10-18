@@ -34,7 +34,7 @@ public class GameMatch {
         private int output;
         private Condition CV;
         private int matchNumber;
-        private KThread lastThread;
+//        private KThread lastThread;
 
         public Gamelevel(Lock lock,int count,Condition cv) {
             this.lock = lock;
@@ -43,7 +43,7 @@ public class GameMatch {
             // the number of players out
             this.output = count;
             this.CV = cv;
-            this.lastThread = null;
+//            this.lastThread = null;
         }
 
         public Lock getLock() {
@@ -78,13 +78,13 @@ public class GameMatch {
             this.matchNumber = matchNumber;
         }
 
-        public KThread getLastThread() {
-            return lastThread;
-        }
-
-        public void setLastThread(KThread lastThread) {
-            this.lastThread = lastThread;
-        }
+//        public KThread getLastThread() {
+//            return lastThread;
+//        }
+//
+//        public void setLastThread(KThread lastThread) {
+//            this.lastThread = lastThread;
+//        }
 
         public int getOutput() {
             return output;
@@ -148,15 +148,15 @@ public class GameMatch {
     public void playLevel (Gamelevel level) {
         int inMatch = level.getCount();
 //        System.out.println ("start"+KThread.currentThread().getName());
-        KThread lastThread = level.getLastThread();
+//        KThread lastThread = level.getLastThread();
         if(inMatch == 1){
             level.setCount(numInMatch);
             level.getLock().acquire();
             level.getCV().wakeAll();
             level.getLock().release();
-            if(lastThread != null){
-                lastThread.join();
-            }
+//            if(lastThread != null){
+//                lastThread.join();
+//            }
         }
         else{
             level.setCount(level.getCount()-1);
@@ -164,7 +164,7 @@ public class GameMatch {
             level.getCV().sleep();
             level.getLock().release();
         }
-        level.setLastThread(KThread.currentThread());
+//        level.setLastThread(KThread.currentThread());
 
 
         if(level.getOutput() == numInMatch){
