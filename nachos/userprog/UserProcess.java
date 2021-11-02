@@ -6,6 +6,8 @@ import nachos.userprog.*;
 import nachos.vm.*;
 
 import java.io.EOFException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Encapsulates the state of a user process that is not contained in its user
@@ -24,6 +26,9 @@ public class UserProcess {
 	 * Allocate a new process.
 	 */
 	public UserProcess() {
+		//added
+		filesTable = new HashMap<Integer,OpenFile>();
+		NameDesTable = new HashMap<String,Integer>();
 		int numPhysPages = Machine.processor().getNumPhysPages();
 		pageTable = new TranslationEntry[numPhysPages];
 		for (int i = 0; i < numPhysPages; i++)
@@ -378,6 +383,238 @@ public class UserProcess {
 			syscallJoin = 3, syscallCreate = 4, syscallOpen = 5,
 			syscallRead = 6, syscallWrite = 7, syscallClose = 8,
 			syscallUnlink = 9;
+	
+	//added:
+	private static int maximumFile = 16;
+	private HashMap<Integer, OpenFile> filesTable;
+	private HashMap<String, Integer> NameDesTable;
+	private static int maximumFileSize = 256;
+	private static int bufferSize = 0x400;
+
+	private int handleCreat(int name){
+		for (int index = 2; index < maximumFile; index ++) {
+			//check if the file has open or not.
+			if (!filesTable.containsKey(index)) {
+				String file = readVirtualMemoryString(name, maximumFileSize);
+				//handle the exception before the file is create
+				if (file == null){ //return -1 if the filename is null
+					return -1; 
+				}
+				//return -1 if the file is out of range
+				if (file.length() > maximumFileSize){
+					return -1;
+				}
+				
+				OpenFile cfile = ThreadedKernel.fileSystem.open(file, true);
+				//return -1 if the file doesn't exist
+				if (cfile == null){
+					return -1;
+				}else {
+					//file does exist
+					filesTable.put(index, cfile);
+					NameDesTable.put(file, index); //for unlink later use.
+					//nameFdTable.put(fileName, fd);
+					//System.out.println(fileName + "is created/opened successfully. The fd is " + fd);
+					return index;
+				}
+			}
+		}
+		return -1;
+	}
+	
+	private int handleOpen(int name){
+		for (int index = 2; index < maximumFile; index ++) {
+			if (!filesTable.containsKey(index)) {
+				String file = readVirtualMemoryString(name, maximumFileSize);
+				//handle the exception before the file is create
+				if (file == null){ //return -1 if the filename is null
+					return -1; 
+				}
+				//return -1 if the file is out of range
+				if (file.length() > maximumFileSize){
+					return -1;
+				}
+				
+				OpenFile cfile = ThreadedKernel.fileSystem.open(file, true);
+				//return -1 if the file doesn't exist
+				if (cfile == null){
+					return -1;
+				}else {
+					//file does exist
+					filesTable.put(index, cfile);
+					NameDesTable.put(file, index); //for unlink later use.
+					return index;
+				}
+			}
+		}
+		return -1;
+	}
+	
+	 /**
+     * Attempt to read up to count bytes into buffer from the file or stream
+     * referred to by fileDescriptor.
+     *
+     * On success, the number of bytes read is returned. If the file descriptor
+     * refers to a file on disk, the file position is advanced by this number.
+     *
+     * It is not necessarily an error if this number is smaller than the number of
+     * bytes requested. If the file descriptor refers to a file on disk, this
+     * indicates that the end of the file has been reached. If the file descriptor
+     * refers to a stream, this indicates that the fewer bytes are actually
+     * available right now than were requested, but more bytes may become available
+     * in the future. Note that read() never waits for a stream to have more data;
+     * it always returns as much as possible immediately.
+     *
+     * On error, -1 is returned, and the new file position is undefined. This can
+     * happen if fileDescriptor is invalid, if part of the buffer is read-only or
+     * invalid, or if a network stream has been terminated by the remote host and
+     * no more data is available.
+     */
+	private int handleRead(int index, int vaddr, int count) {
+		int totalReadAmount = 0;
+		int readAddr = vaddr;		
+		byte[] buffer = new byte[bufferSize];
+		boolean flag = true; 
+		
+		//if the files is not open yet, return -1
+		if (!filesTable.containsKey(index))
+			return -1;
+		
+		if(count<0) {
+			return -1;
+		}
+		
+		OpenFile file = filesTable.get(index);
+		
+		while(flag) {
+			int readBufferSize = count > bufferSize ? bufferSize : count;
+			
+			int readAmount = file.read(buffer, 0, readBufferSize);
+			//if read fail:
+			if (readAmount == -1){
+				return -1;
+			}
+			
+			count = count - readAmount;
+			//if read amount is equal to the buffersize, it means that it reads to the end of the file
+			if(readAmount != bufferSize || count<=0) {
+				flag = false;
+			
+			}
+			
+			writeVirtualMemory(readAddr, buffer, 0, readAmount);
+			totalReadAmount = totalReadAmount + readAmount;
+			readAddr = readAddr + readAmount;
+			
+			
+		}
+		
+		return totalReadAmount;
+	}
+	
+	
+	/**
+     * Attempt to write up to count bytes from buffer to the file or stream
+     * referred to by fileDescriptor. write() can return before the bytes are
+     * actually flushed to the file or stream. A write to a stream can block,
+     * however, if kernel queues are temporarily full.
+     *
+     * On success, the number of bytes written is returned (zero indicates nothing
+     * was written), and the file position is advanced by this number. It IS an
+     * error if this number is smaller than the number of bytes requested. For
+     * disk files, this indicates that the disk is full. For streams, this
+     * indicates the stream was terminated by the remote host before all the data
+     * was transferred.
+     *
+     * On error, -1 is returned, and the new file position is undefined. This can
+     * happen if fileDescriptor is invalid, if part of the buffer is invalid, or
+     * if a network stream has already been terminated by the remote host.
+     */
+	private int handleWrite(int index, int vaddr, int count){
+		byte[] buffer = new byte[bufferSize];
+		boolean flag = true;
+		int totalWriteAmount = 0; //return value
+		int writeRequirment = count;
+		int writeAddr = vaddr;
+		//if the files is not open yet, return -1
+		if (!filesTable.containsKey(index))
+			return -1;
+		//write count couldn't smaller than 0
+		if (count < 0)
+		    return -1;
+		if (count == 0)
+		    return 0;
+		OpenFile file = filesTable.get(index);
+		
+		while(flag) {
+			int writeBufferSize = count > bufferSize ? bufferSize : count;
+			int writeAmount = readVirtualMemory(writeAddr, buffer, 0, writeBufferSize);
+			count = count - writeAmount;
+			if (file.write(buffer, 0, writeAmount) == -1)
+				return -1;
+			
+			if(count <=0 || writeAmount!= bufferSize) {
+				flag =false;
+			}
+			writeAddr = writeAddr + writeAmount;
+			totalWriteAmount = totalWriteAmount + writeAmount;
+			
+		}
+		
+		//if the total write amount is not meet the requirement, then it means that it stop or interrupted.
+		//return -1
+		if (writeRequirment != totalWriteAmount) {
+			return -1;
+		}
+		
+		return totalWriteAmount;
+	}
+	
+	/**
+	 * Close a file descriptor, so that it no longer refers to any file or
+	 * stream and may be reused. The resources associated with the file
+	 * descriptor are released.
+	 *
+	 * Returns 0 on success, or -1 if an error occurred.
+	 */
+	 private int handleClose(int index){
+		 //if the file doesn't not open or does not exist, then return -1.
+	     if (!filesTable.containsKey(index))
+	         return -1;
+        OpenFile file = filesTable.get(index);
+        file.close();     
+        //remove it from the file table
+        filesTable.remove(index);
+        return 0;
+	 }
+	 /**
+	  * Delete a file from the file system. 
+	  *
+	  * If another process has the file open, the underlying file system
+	  * implementation in StubFileSystem will cleanly handle this situation
+	  * (this process will ask the file system to remove the file, but the
+	  * file will not actually be deleted by the file system until all
+	  * other processes are done with the file).
+	  *
+	  * Returns 0 on success, or -1 if an error occurred.
+     */
+	 private int handleUnlink(int fname){
+	 	String fileName = readVirtualMemoryString(fname, maximumFileSize);
+	 	if (!NameDesTable.containsKey(fileName))
+	 		return -1;
+	 	//if it doesn't exist, then return -1.
+	 	
+	 	int index  = NameDesTable.get(fileName);
+	 	//remove it from the name table and the descriptor table
+	 	NameDesTable.remove(fileName);
+	 	filesTable.remove(index);
+ 		
+	 	if (ThreadedKernel.fileSystem.remove(fileName))
+	 		return 0;
+	 	else
+	 		return -1;
+	 }
+	
 
 	/**
 	 * Handle a syscall exception. Called by <tt>handleException()</tt>. The
@@ -441,11 +678,24 @@ public class UserProcess {
 	 * @return the value to be returned to the user.
 	 */
 	public int handleSyscall(int syscall, int a0, int a1, int a2, int a3) {
+		System.out.println("syscall number:"+syscall);
 		switch (syscall) {
 		case syscallHalt:
 			return handleHalt();
 		case syscallExit:
 			return handleExit(a0);
+		case syscallCreate:
+			return handleCreat(a0);
+		case syscallOpen:
+			return handleOpen(a0);
+		case syscallRead:
+			return handleRead(a0, a1, a2);
+		case syscallWrite:
+			return handleWrite(a0, a1, a2);
+		case syscallClose:
+			return handleClose(a0);
+		case syscallUnlink:
+			return handleUnlink(a0);
 
 		default:
 			Lib.debug(dbgProcess, "Unknown syscall " + syscall);
